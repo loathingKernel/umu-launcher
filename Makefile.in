@@ -93,7 +93,7 @@ endif
 # umu-launcher is separate to allow control over installing the bin target
 $(OBJDIR)/.build-umu-launcher: | $(OBJDIR)
 	$(info :: Building umu-launcher )
-	sed 's|##INSTALL_PATH##|$(UMU_LAUNCHER_COMMAND)|g' umu/umu-launcher/umu-run.in > $(OBJDIR)/umu-launcher-run
+	sed 's|@INSTALL_PATH@|$(UMU_LAUNCHER_COMMAND)|g' umu/umu-launcher/umu-run.in > $(OBJDIR)/umu-launcher-run
 	touch $(@)
 
 .PHONY: umu-launcher
