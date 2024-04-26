@@ -7,12 +7,7 @@ project('umu',
 # 'libdir' is likely a more conformant target directory than 'datadir'
 umu_install_path = get_option('datadir') / meson.project_name()
 
-subproject('reaper',
-    default_options : [
-        'prefix=' + get_option('prefix'),
-        'bindir=' + get_option('prefix') / umu_install_path,
-    ],
-)
+subproject('reaper')
 
 subdir('umu')
 if not get_option('flatpak')
