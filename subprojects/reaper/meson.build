@@ -6,8 +6,8 @@ project(
 
 thread_dep = dependency('threads')
 
-executable(
-    'reaper',
+reaper = executable(
+    'umu-reaper',
     'reaper.cpp',
     install: true,
 	dependencies : [
