@@ -6,6 +6,8 @@ man_1 = custom_target('man1',
     command : [ scdoc ],
     feed : true,
     capture : true,
+    install: true,
+    install_dir: get_option('mandir') / 'man1'
 )
 
 man_5 = custom_target('man5',
@@ -14,7 +16,6 @@ man_5 = custom_target('man5',
     command : [ scdoc ],
     feed : true,
     capture : true,
+    install: true,
+    install_dir: get_option('mandir') / 'man5'
 )
-
-install_man(man_1.full_path())
-install_man(man_5.full_path())
