@@ -789,7 +789,8 @@ def main() -> int:  # noqa: D103
     }
     command: list[AnyPath] = []
     opts: list[str] = []
-    root: Path = Path(__file__).resolve(strict=True).parent
+    umu_bin = sys.argv[0] if "__compiled__" in globals() else __file__
+    root: Path = Path(umu_bin).resolve(strict=True).parent
     args: Namespace | tuple[str, list[str]] = parse_args()
 
     if os.geteuid() == 0:
