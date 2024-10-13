@@ -790,7 +790,8 @@ def main() -> int:  # noqa: D103
     root: Traversable
 
     try:
-        root = Path(__file__).resolve(strict=True).parent
+        umu_bin = sys.argv[0] if "__compiled__" in globals() else __file__
+        root = Path(umu_bin).resolve(strict=True).parent
     except NotADirectoryError:
         # Raised when within a zipapp. Try again in non-strict mode
         root = zipfile.Path(
