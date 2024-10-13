@@ -1,0 +1,73 @@
+name: UMU Standalone Build - Focal (Ubuntu 20.04 LTS)
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          cache: pip
+          python-version: '3.12'
+          check-latest: true
+          architecture: x64
+
+      - name: Install build dependencies
+        run: pip3 install nuitka ordered-set
+
+      - name: Install target dependencies
+        run: |
+          pip3 install -r requirements.in
+
+      - name: Prepare source
+        run: |
+          ./configure.sh --user-install
+          make version
+
+      - name: Build
+        run: >-
+          python -m nuitka
+          --assume-yes-for-downloads
+          --show-scons
+          --lto=no
+          --jobs=4
+          --static-libpython=no
+          --standalone
+          --enable-plugin=anti-bloat
+          --show-modules
+          --show-anti-bloat-changes
+          --follow-stdlib
+          --follow-imports
+          --nofollow-import-to="*.tests"
+          --nofollow-import-to="*.distutils"
+          --nofollow-import-to="distutils"
+          --nofollow-import-to="unittest"
+          --nofollow-import-to="pydoc"
+          --nofollow-import-to="tkinter"
+          --nofollow-import-to="test"
+          --prefer-source-code
+          --include-package=Xlib
+          --include-package=filelock
+          --include-data-files=umu/umu_version.json=umu_version.json
+          umu
+
+      - name: Compress
+        run: |
+          find umu.dist -iname "*.so*" -type f -exec strip --strip-unneeded {} \;
+          strip --strip-unneeded umu.dist/umu.bin
+          python -c "import shutil; shutil.make_archive('umu-launcher', 'zip', 'umu.dist')"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: umu-launcher.zip
+          path: umu-launcher.zip
+
