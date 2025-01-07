@@ -39,6 +39,8 @@ from umu import __runtime_version__, __version__
 from umu.umu_consts import (
     PR_SET_CHILD_SUBREAPER,
     PROTON_VERBS,
+    RUNTIME_NAMES,
+    RUNTIME_VERSIONS,
     STEAM_COMPAT,
     STEAM_WINDOW_ID,
     UMU_LOCAL,
@@ -153,6 +155,11 @@ def check_env(
     if "PROTONPATH" not in os.environ:
         os.environ["PROTONPATH"] = ""
         get_umu_proton(env, session_pools)
+
+    if (key := os.environ.get("PROTONPATH")) in RUNTIME_NAMES:
+        os.environ["PROTONPATH"] = str(
+            RUNTIME_VERSIONS[RUNTIME_NAMES[key]].path
+        )
 
     env["PROTONPATH"] = os.environ["PROTONPATH"]
 
@@ -322,28 +329,35 @@ def build_command(
         )
         raise FileNotFoundError(err)
 
-    runtime = SteamRuntime(local.as_posix())
-    # Will run the game within the Steam Runtime w/o Proton
-    # Ideally, for reliability, executables should be compiled within
-    # the Steam Runtime
     if env.get("UMU_NO_TOOL") == "1":
+        inner = SteamRuntime(RUNTIME_VERSIONS["1628350"].path)
+        if inner.required_tool_appid is not None:
+            outer = SteamRuntime(inner.required_runtime.path.as_posix())
+            inner.runtime = outer
+        # Will run the game within the Steam Runtime w/o Proton
+        # Ideally, for reliability, executables should be compiled within
+        # the Steam Runtime
         log.debug(
             "Compatibility tool disabled. Executing linux-native executable %s", env["EXE"]
         )
         return (
-            *runtime.command(env["PROTON_VERB"]),
+            *inner.command(env["PROTON_VERB"]),
             env["EXE"],
             *opts,
         )
 
+    compat_tool = CompatibilityTool(env["PROTONPATH"], shim)
+    # if compat_tool.required_tool_appid is not None:
+    #     inner = SteamRuntime(compat_tool.required_runtime.path.as_posix())
+    #     if inner.required_tool_appid is not None:
+    #         outer = SteamRuntime(inner.required_runtime.path.as_posix())
+    #         inner.runtime = outer
+    #     compat_tool.runtime = inner
+
     # Setup compatibility tool
     # If the user explicitly requested to run without the runtime,
     # force runtime to None
-    compat_tool = CompatibilityTool(
-        env["PROTONPATH"],
-        shim,
-        None if env["UMU_NO_RUNTIME"] == "1" else runtime
-    )
+
     log.info("Using compatibility tool %s", compat_tool.display_name)
     # Will run the game outside the Steam Runtime w/ Proton
     if not compat_tool.runtime_enabled:

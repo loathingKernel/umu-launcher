@@ -1,4 +1,5 @@
 import os
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
@@ -53,13 +54,6 @@ PROTON_VERBS = {
     "getnativepath",
 }
 
-RUNTIME_VERSIONS = {
-    # "1070560": ("scout", "steamrt1"),
-    "1391110": ("soldier", "steamrt2"),
-    "1628350": ("sniper", "steamrt3"),
-    # "": ("medic", "steamrt4"),
-}
-
 XDG_CACHE_HOME: Path = (
     Path(os.environ["XDG_CACHE_HOME"])
     if os.environ.get("XDG_CACHE_HOME")
@@ -100,3 +94,32 @@ UMU_COMPAT: Path = XDG_DATA_HOME.joinpath("umu", "compatibilitytools")
 # Constant defined in prctl.h
 # See prctl(2) for more details
 PR_SET_CHILD_SUBREAPER = 36
+
+
+@dataclass
+class UmuRuntime:
+    """Holds information about a runtime."""
+
+    name: str
+    version: str
+    path: Path | None = None
+
+    def __post_init__(self) -> None:  # noqa: D105
+        if self.version == "native":
+            return
+        if self.path is None:
+            self.path = UMU_LOCAL.joinpath(self.name)
+        # # Temporary override for backwards compatibility
+        # if self.version == "steamrt3":
+        #     self.path = UMU_LOCAL
+
+
+RUNTIME_VERSIONS = {
+    "host":    UmuRuntime("host",    "native"  ),
+    "1070560": UmuRuntime("scout",   "steamrt1"),
+    "1391110": UmuRuntime("soldier", "steamrt2"),
+    "1628350": UmuRuntime("sniper",  "steamrt3"),
+    # ""       : UmuRuntime("medic",   "steamrt4"),
+}
+
+RUNTIME_NAMES = {RUNTIME_VERSIONS[key].name: key for key in RUNTIME_VERSIONS}
