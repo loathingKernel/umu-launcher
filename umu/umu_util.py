@@ -1,7 +1,7 @@
 import os
 import sys
 from collections.abc import Generator
-from contextlib import contextmanager
+from contextlib import contextmanager, redirect_stdout
 from ctypes.util import find_library
 from fcntl import LOCK_EX, LOCK_UN, flock
 from functools import cache
