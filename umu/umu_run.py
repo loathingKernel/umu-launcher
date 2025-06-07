@@ -492,13 +492,8 @@ def get_umu_version_from_manifest(
                 break
 
     if not appid:
-        if os.environ.get("UMU_NO_RUNTIME", None) == "1":
-            log.warning(
-                "Runtime Platform disabled. This mode is UNSUPPORTED by umu and remains only for convenience. "
-                "Issues created while using this mode will be automatically closed."
-            )
-            return "host", "host", "host"
-        return None
+        os.environ["UMU_RUNTIME_UPDATE"] = "0"
+        return "host", "host", "host"
 
     if appid not in appids:
         return None
