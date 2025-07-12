@@ -405,7 +405,7 @@ def run_command(command: tuple[Path | str, ...]) -> int:
         c_ulong,
     ]
     prctl_ret = prctl(PR_SET_CHILD_SUBREAPER, 1, 0, 0, 0, 0)
-    log.debug("prctl exited with status: %s", prctl_ret)
+    log.debug("prctl PR_SET_CHILD_SUBREAPER exited with status: %s", prctl_ret)
 
     pid = os.fork()
     if pid == -1:
@@ -416,8 +416,6 @@ def run_command(command: tuple[Path | str, ...]) -> int:
         sys.stderr.flush()
         os.chdir(cwd)
         os.execvp(command[0], command)  # noqa: S606
-    elif is_steammode:
-        run_in_steammode()
 
     while True:
         try:
