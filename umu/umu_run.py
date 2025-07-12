@@ -14,7 +14,6 @@ from pwd import getpwuid
 from re import match
 from secrets import token_hex
 from socket import AF_INET, SOCK_DGRAM, socket
-from subprocess import Popen
 from typing import Any
 
 from urllib3 import PoolManager, Retry
@@ -382,7 +381,6 @@ def run_command(command: tuple[Path | str, ...]) -> int:
     """Run the executable using Proton within the Steam Runtime."""
     prctl: CFuncPtr
     cwd: Path | str
-    proc: Popen
     ret: int = 0
     prctl_ret: int = 0
     libc: str = get_libc()
@@ -409,8 +407,23 @@ def run_command(command: tuple[Path | str, ...]) -> int:
     prctl_ret = prctl(PR_SET_CHILD_SUBREAPER, 1, 0, 0, 0, 0)
     log.debug("prctl exited with status: %s", prctl_ret)
 
-    with Popen(command, start_new_session=True, cwd=cwd) as proc:
-        log.debug("Child %s exited with wait status: %s", proc.pid, ret)
+    pid = os.fork()
+    if pid == -1:
+        log.error("Fork failed")
+
+    if pid == 0:
+        sys.stdout.flush()
+        sys.stderr.flush()
+        os.chdir(cwd)
+        os.execvp(command[0], command)  # noqa: S606
+
+    while True:
+        try:
+            wait_pid, wait_status = os.wait()
+            log.debug("Child %s exited with wait status: %s", wait_pid, wait_status)
+        except ChildProcessError as e:
+            log.info(e)
+            break
 
     return ret
 
