@@ -1,3 +1,4 @@
+import inspect
 import os
 import platform
 import shlex
@@ -35,6 +36,20 @@ RuntimeVersion = tuple[str, str, str]
 SessionPools = tuple[ThreadPoolExecutor, PoolManager]
 
 
+def _create_script(file_path: Path, contents: str) -> bool:
+    if file_path.is_file():
+        with file_path.open("r") as file:
+            target_contents = file.read()
+        if target_contents == contents:
+            return False
+
+    with file_path.open("w") as file:
+        file.write(contents)
+
+    file_path.chmod(0o700)
+    return True
+
+
 def create_shim(file_path: Path):
     """Create a shell script shim at the specified file path.
 
@@ -45,24 +60,9 @@ def create_shim(file_path: Path):
         file_path (Path, optional): The path where the shim script will be created.
 
     """
-    script_content = (
-        "#!/bin/sh\n"
-        "\n"
-        'if [ "${XDG_CURRENT_DESKTOP}" = "gamescope" ] || [ "${XDG_SESSION_DESKTOP}" = "gamescope" ]; then\n'
-        "    # Check if STEAM_MULTIPLE_XWAYLANDS is set to 1\n"
-        '    if [ "${STEAM_MULTIPLE_XWAYLANDS}" = "1" ]; then\n'
-        '        # Check if DISPLAY is set, if not, set it to ":1"\n'
-        '        if [ -z "${DISPLAY}" ]; then\n'
-        '            export DISPLAY=":1"\n'
-        "        fi\n"
-        "    fi\n"
-        "fi\n"
-        "\n"
-        "# Execute the passed command\n"
-        'exec "$@"\n'
-    )
-    file_path.write_text(script_content, encoding="utf-8")
-    file_path.chmod(0o700)
+    import umu.scripts.shim as module
+    contents = inspect.getsource(module)
+    _create_script(file_path, contents)
 
 
 def _install_umu(

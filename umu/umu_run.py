@@ -1014,8 +1014,7 @@ def umu_run(args: Namespace | tuple[str, list[str]]) -> int:
                 log.exception(e)
 
         # Restore shim if missing
-        if not UMU_LOCAL.joinpath("umu-shim").is_file():
-            create_shim(UMU_LOCAL / "umu-shim")
+        create_shim(UMU_LOCAL / "umu-shim")
 
         protonpath: Path = Path(env["PROTONPATH"]).expanduser().resolve(strict=True)
         layer = CompatLayer(protonpath, UMU_LOCAL.joinpath("umu-shim"))
